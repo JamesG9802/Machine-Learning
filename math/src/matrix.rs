@@ -5,6 +5,9 @@ pub struct Matrix {
     pub rows: usize,
     pub cols: usize,
 
+    /// <summary>
+    /// The matrix is stored as 1D array.
+    /// </summary>
     data: Vec<f64>,
 }
 
@@ -19,9 +22,9 @@ impl Matrix {
             data_list.push(0.0);
         }
         return Matrix {
-            data: data_list,
             rows: rows,
             cols: cols,
+            data: data_list,
         };
     }
     
@@ -40,10 +43,44 @@ impl Matrix {
     }
     
     /// <summary>
-    /// Creates an matrix equal to the dot product of matrix1 and matrix2.
+    /// Returns a new matrix that is a submatrix of this matrix. Does not check if indices are in bounds.
     /// </summary>
-    pub fn dot(&self, other: Matrix) -> Matrix{
-        let mut new_matrix = Matrix::new(self.cols, other.rows);
+    pub fn submatrix(&self, start_row: usize, start_col: usize, end_row: usize, end_col: usize) -> Matrix {
+        let mut new_data: Vec<f64> = Vec::new();
+        for i in start_row..end_row {
+            for j in start_col..end_col {
+                new_data.push(self.at(i, j));
+            }
+        }
+        return Matrix {
+            rows: (end_row - start_row),
+            cols: (end_col - start_col),
+            data: new_data,
+        }
+    }
+
+    // <summary>
+    /// Returns the transpose of the matrix.
+    /// </summary>
+    pub fn transpose(&self) -> Matrix {
+        let mut new_data: Vec<f64> = Vec::new();
+        for j in 0..self.cols {
+            for i in 0..self.rows {
+                new_data.push(self.at(i, j));
+            }
+        }
+        return Matrix {
+            rows: self.cols,
+            cols: self.rows,
+            data: new_data,
+        }
+    }
+
+    /// <summary>
+    /// Creates an matrix equal to the dot product of this and the other matrix. Does not check if it is possible.
+    /// </summary>
+    pub fn dot(&self, other: &Matrix) -> Matrix {
+        let mut new_matrix = Matrix::new(self.rows, other.cols);
         for i in 0..new_matrix.rows {
             for j in 0..new_matrix.cols {
                 //  Each index is corresponds to the ith row of matrix1 * the jth column of matrix2.
@@ -57,6 +94,46 @@ impl Matrix {
         return new_matrix;
     }
 
+    /// <summary>
+    /// Creates an matrix equal to the sum of this and the other matrix. Does not check if it is possible.
+    /// </summary>
+    pub fn add(&self, other: &Matrix) -> Matrix {
+        let mut new_matrix = Matrix::new(self.rows, self.cols);
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                new_matrix.set(i, j, self.at(i, j) + other.at(i, j));
+            }
+        }
+        return new_matrix;
+    }
+
+    /// <summary>
+    /// Returns a matrix where each value in the matrix is multiplied by a scalar value.
+    /// </summary>
+    pub fn multiply_scalar(&self, scalar: f64) -> Matrix {
+        let mut new_data = self.data.clone();
+        for i in 0..self.rows * self.cols {
+            new_data[i] = new_data[i] * scalar;
+        }
+        return Matrix {
+            rows: self.rows,
+            cols: self.cols,
+            data: new_data
+        }
+    }
+
+    /// <summary>
+    /// Returns the sum of all indices from [start_row][start_col] to [end_row][end_col]
+    /// </summary>
+    pub fn sum(&self, start_row: usize, start_col: usize, end_row: usize, end_col: usize) -> f64 {
+        let mut sum: f64 = 0.0;
+        for i in start_row..end_row {
+            for j in start_col..end_col {
+                sum += self.data[i * self.cols + j];
+            }
+        }
+        return sum;
+    }
     /// <summary>
     /// Returns the matrix as a String.
     /// </summary>
