@@ -123,6 +123,21 @@ impl Matrix {
     }
 
     /// <summary>
+    /// Returns a matrix where each value in the matrix is multiplied by a scalar value.
+    /// </summary>
+    pub fn add_scalar(&self, scalar: f64) -> Matrix {
+        let mut new_data = self.data.clone();
+        for i in 0..self.rows * self.cols {
+            new_data[i] = new_data[i] + scalar;
+        }
+        return Matrix {
+            rows: self.rows,
+            cols: self.cols,
+            data: new_data
+        }
+    }
+
+    /// <summary>
     /// Returns the sum of all indices from [start_row][start_col] to [end_row][end_col]
     /// </summary>
     pub fn sum(&self, start_row: usize, start_col: usize, end_row: usize, end_col: usize) -> f64 {

@@ -92,4 +92,86 @@ mod tests {
 
         assert_eq!(dot_matrix.to_string(), matrix_check.to_string());
     }
+
+    #[test]
+    fn add_test() {
+        let mut matrix = Matrix::new(2, 2);
+        matrix.set(0, 0, 1.0);
+        matrix.set(0, 1, 2.0);
+        matrix.set(1, 0, 3.0);
+        matrix.set(1, 1, 4.0);
+
+        let mut matrix_other = Matrix::new(2, 2);
+        matrix_other.set(0, 0, 1.0);
+        matrix_other.set(0, 1, 2.0);
+        matrix_other.set(1, 0, 3.0);
+        matrix_other.set(1, 1, 4.0);
+
+        let add_matrix = matrix.add(&matrix_other);
+        let mut matrix_check = Matrix::new(2, 2);
+        matrix_check.set(0, 0, 2.0);
+        matrix_check.set(0, 1, 4.0);
+        matrix_check.set(1, 0, 6.0);
+        matrix_check.set(1, 1, 8.0);
+        println!("{}", add_matrix.to_string());
+        println!("{}", matrix_check.to_string());
+
+        assert_eq!(add_matrix.to_string(), matrix_check.to_string());
+    }
+
+    #[test]
+    fn multiply_scalar_test() {
+        let mut matrix = Matrix::new(2, 2);
+        matrix.set(0, 0, 1.0);
+        matrix.set(0, 1, 2.0);
+        matrix.set(1, 0, 3.0);
+        matrix.set(1, 1, 4.0);
+
+        let multiply_scalar_matrix = matrix.multiply_scalar(2.0);
+        let mut matrix_check = Matrix::new(2, 2);
+        matrix_check.set(0, 0, 2.0);
+        matrix_check.set(0, 1, 4.0);
+        matrix_check.set(1, 0, 6.0);
+        matrix_check.set(1, 1, 8.0);
+        println!("{}", multiply_scalar_matrix.to_string());
+        println!("{}", matrix_check.to_string());
+
+        assert_eq!(multiply_scalar_matrix.to_string(), matrix_check.to_string());
+    }
+
+    #[test]
+    fn add_scalar_test() {
+        let mut matrix = Matrix::new(2, 2);
+        matrix.set(0, 0, 1.0);
+        matrix.set(0, 1, 2.0);
+        matrix.set(1, 0, 3.0);
+        matrix.set(1, 1, 4.0);
+
+        let multiply_scalar_matrix = matrix.add_scalar(-2.0);
+        let mut matrix_check = Matrix::new(2, 2);
+        matrix_check.set(0, 0, -1.0);
+        matrix_check.set(0, 1, 0.0);
+        matrix_check.set(1, 0, 1.0);
+        matrix_check.set(1, 1, 2.0);
+        println!("{}", multiply_scalar_matrix.to_string());
+        println!("{}", matrix_check.to_string());
+
+        assert_eq!(multiply_scalar_matrix.to_string(), matrix_check.to_string());
+    }
+
+    #[test]
+    fn sum_test() {
+        let mut matrix = Matrix::new(2, 2);
+        matrix.set(0, 0, 1.0);
+        matrix.set(0, 1, 2.0);
+        matrix.set(1, 0, 3.0);
+        matrix.set(1, 1, 4.0);
+
+        let sum = matrix.sum(0, 0, matrix.rows, matrix.cols);
+        let sum_check = 10.0;
+        println!("{}", {sum});
+        println!("{}", {sum_check});
+
+        assert_eq!(sum, sum_check);
+    }
 }

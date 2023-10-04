@@ -11,6 +11,11 @@ pub struct LinearRegression {
     /// A d-dimensional vector to multiply with inputs to predict a value.
     /// </summary>
     weights: Matrix,
+
+    /// <summary>
+    /// A scalar that offsets the predicted value.
+    /// </summary>
+    bias: f64,
 }
 
 impl LinearRegression {
@@ -22,9 +27,13 @@ impl LinearRegression {
         return LinearRegression {
             input_size: input_size,
             weights: weights,
+            bias: 0.0,
         };
     }
 
+    /// <summary>
+    /// Trains the linear regression model with the given training function.
+    /// </summary>
     pub fn train(
         &mut self,
         training_inputs: Matrix,
@@ -46,7 +55,7 @@ impl LinearRegression {
                 self.weights.rows, self.weights.cols);
         }
         //  y = xwT
-        return inputs.dot(&self.weights.transpose());
+        return inputs.dot(&self.weights.transpose()).add_scalar(self.bias);
     }
 
     /// <summary>
@@ -60,7 +69,7 @@ impl LinearRegression {
                 self.weights.rows, self.weights.cols);
         }
         //  y = xwT
-        return inputs.dot(&self.weights.transpose()).at(0, 0);
+        return inputs.dot(&self.weights.transpose()).at(0, 0) + self.bias;
     }
 }
 
@@ -93,24 +102,29 @@ pub fn batch_gradient_descent_l1(
     while hyper_parameters[1] == -1.0 || iteration_count < hyper_parameters[1] {
         iteration_count += 1.0;
         println!("Iteration #{iteration_count}");
-        let mut gradient: Matrix = Matrix::new(1, training_inputs.cols);
-        for dataindex in 0..training_inputs.rows {
-            let x: Matrix = training_inputs.submatrix(dataindex, 0, dataindex + 1, training_inputs.cols);
-            let prediction: f64 = model.predict(&x);
-            gradient = gradient.add(&x.multiply_scalar(prediction - training_outputs.at(dataindex, 0)));
-        }
-        gradient = gradient.multiply_scalar(hyper_parameters[0] * -2.0 / training_inputs.rows as f64);
+        let gradient_weights: Matrix;
+        let gradient_bias: f64;
+        //  prediction: y = w1x1 + w2x2 + ... wnxn + bias
+        //  mean squared error: 1/n(actual-predicted)^2
+        //  gradient (weights): -2/n Σ(actual-predicted)x
+        //  gradient (bias): -2/n Σ(actual-predicted)
+        let prediction: Matrix = model.predict_outputs(training_inputs);
+        let difference: Matrix = training_outputs.add(&prediction.multiply_scalar(-1.0));
+        //  Σ(actual-predicted)x
+        gradient_weights = training_inputs.transpose().dot(&difference);
+        //  Σ(actual-predicted)
+        gradient_bias = difference.sum(0, 0, difference.rows, difference.cols);
+        //  weights = weights - gradient
+        model.weights = model.weights.add(&gradient_weights.multiply_scalar(2.0 * hyper_parameters[0] / training_inputs.rows as f64));
+        model.bias = model.bias + gradient_bias * 2.0 * hyper_parameters[0] / training_inputs.rows as f64;
 
         let mut training_error: f64 = 0.0;
-        let prediction: Matrix = model.predict_outputs(training_inputs);
         for i in 0..training_outputs.rows {
             training_error += loss_squared(training_outputs.at(i, 0), prediction.at(i, 0));
         }
         println!("\tTraining error: {}", training_error);
-
-        model.weights = model.weights.add(&gradient);
         println!("\tWeights: \n{}", model.weights.to_string());
-
+        println!("\tBias: \n{}", model.bias);
         
     }
 }
