@@ -6,6 +6,7 @@ use dragon_math as math;
 use math::matrix::Matrix;
 
 use dragon_model as model;
+use model::linear_regression;
 use model::linear_regression::LinearRegression;
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,36 +28,50 @@ fn main() {
     let mut binding = fs::read_to_string(file).expect("Something went wrong reading the file.");
     binding = binding.trim().to_string();
     let contents = binding.split("\n");
-    let mut inputs: Matrix = Matrix::new(contents.clone().collect::<Vec<&str>>().len() - 1, 3);
-    let mut outputs: Matrix = Matrix::new(inputs.rows, 1);
     let mut first_line: bool = true;
     let mut line_count = 0;
 
+    let mut dataset: Matrix = Matrix::new(contents.clone().collect::<Vec<&str>>().len() - 1, 4);
     for line in contents {
         if first_line {
             first_line = false;
             continue;
         }
         let features = line.split(",").collect::<Vec<&str>>();
-        inputs.set(line_count, 0, features[0].parse::<f64>().unwrap());
-        inputs.set(line_count, 1, features[1].parse::<f64>().unwrap());
-        inputs.set(line_count, 2, features[2].parse::<f64>().unwrap());
-        //    inputs.set(line_count, 2, features[2]);
-        //    inputs.set(line_count, 3, features[3]);
-        outputs.set(line_count, 0, features[3].parse::<f64>().unwrap());
-        //    println!("+{}| {} {} {} {} {}+", line_count, features[0],features[1],features[2],features[3],features[4]);
+        dataset.set(line_count, 0, features[0].parse::<f64>().unwrap());
+        dataset.set(line_count, 1, features[1].parse::<f64>().unwrap());
+        dataset.set(line_count, 2, features[2].parse::<f64>().unwrap());
+        dataset.set(line_count, 3, features[3].parse::<f64>().unwrap());
         line_count += 1;
     }
-    //  println!("{}", inputs.to_string());
-    //  println!("{}", outputs.to_string());
+
+    let mut inputs: Matrix = Matrix::new(dataset.rows, 3);
+    let mut outputs: Matrix = Matrix::new(dataset.rows, 1);
+
+    dataset = dataset.randomize_rows();
+    for i in 0..dataset.rows {
+        inputs.set(i, 0, dataset.at(i, 0));
+        inputs.set(i, 1, dataset.at(i, 1));
+        inputs.set(i, 2, dataset.at(i, 2));
+        outputs.set(i, 0, dataset.at(i, 3));
+    }
+
+    let training_inputs = inputs.submatrix(0, 0, ((inputs.rows as f64) * 0.8) as usize, inputs.cols);
+    let training_outputs = outputs.submatrix(0, 0, ((outputs.rows as f64) * 0.8) as usize, outputs.cols);
+    let test_inputs = inputs.submatrix(((inputs.rows as f64) * 0.8) as usize, 0, inputs.rows, inputs.cols);
+    let test_outputs = outputs.submatrix(((outputs.rows as f64) * 0.8) as usize, 0, outputs.rows, outputs.cols);
+
 
     let mut model: LinearRegression = LinearRegression::new(3);
+    
     model.train(
-        inputs,
-        outputs,
+        training_inputs,
+        training_outputs,
         vec![learning_rate, max_iterations],
-        model::linear_regression::batch_gradient_descent_l1,
+        model::linear_regression::batch_gradient_descent_l2,
     );
+
+    println!("Loss against test dataset: {}", model.get_loss(&test_inputs, &test_outputs, linear_regression::loss_squared));
 
     let mut line: String;
     let mut inputs: Matrix;

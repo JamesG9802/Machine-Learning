@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 dragon_math = { path = "../math" }
+rand = "0.8.4"

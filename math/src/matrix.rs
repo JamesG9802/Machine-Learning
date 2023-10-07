@@ -1,3 +1,5 @@
+use rand::{self, seq::SliceRandom};
+
 /// <summary>
 /// A data structure to handle matrices.
 /// </summary> 
@@ -72,6 +74,22 @@ impl Matrix {
         return Matrix {
             rows: self.cols,
             cols: self.rows,
+            data: new_data,
+        }
+    }
+
+    pub fn randomize_rows(&self) -> Matrix {
+        let mut shuffled_rows: Vec<usize> = (0..self.rows).collect();
+        shuffled_rows.shuffle(&mut rand::thread_rng());
+        let mut new_data: Vec<f64> = Vec::new();
+        for row in shuffled_rows {
+            for col in 0..self.cols {
+                new_data.push(self.at(row, col))
+            }
+        }
+        return Matrix {
+            rows: self.cols,
+            cols: self.cols,
             data: new_data,
         }
     }
