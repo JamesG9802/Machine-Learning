@@ -12,6 +12,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let mut learning_rate: f64 = 0.01;
     let mut max_iterations: f64 = 10.0;
+    let mut batch_size: f64 = 50.0;
     if args.len() <= 1 {
         return;
     }
@@ -20,6 +21,9 @@ fn main() {
     }
     if args.len() > 3 {
         max_iterations = (&args[3]).parse::<f64>().unwrap();
+    }
+    if args.len() > 4 {
+        batch_size = (&args[4]).parse::<f64>().unwrap();
     }
 
     //  Test with IRIS dataset.
@@ -55,7 +59,6 @@ fn main() {
         inputs.set(i, 2, dataset.at(i, 2));
         outputs.set(i, 0, dataset.at(i, 3));
     }
-
     let training_inputs = inputs.submatrix(0, 0, ((inputs.rows as f64) * 0.8) as usize, inputs.cols);
     let training_outputs = outputs.submatrix(0, 0, ((outputs.rows as f64) * 0.8) as usize, outputs.cols);
     let test_inputs = inputs.submatrix(((inputs.rows as f64) * 0.8) as usize, 0, inputs.rows, inputs.cols);
@@ -67,8 +70,8 @@ fn main() {
     model.train(
         training_inputs,
         training_outputs,
-        vec![learning_rate, max_iterations],
-        model::linear_regression::batch_gradient_descent_l2,
+        vec![learning_rate, max_iterations, batch_size],
+        model::linear_regression::mini_batch_gradient_descent_l2,
     );
 
     println!("Loss against test dataset: {}", model.get_loss(&test_inputs, &test_outputs, linear_regression::loss_squared));

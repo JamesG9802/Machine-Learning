@@ -1,8 +1,10 @@
+use std::clone::Clone;
 use rand::{self, seq::SliceRandom};
 
 /// <summary>
 /// A data structure to handle matrices.
 /// </summary> 
+#[derive(Clone)]
 pub struct Matrix {
     pub rows: usize,
     pub cols: usize,
@@ -29,7 +31,15 @@ impl Matrix {
             data: data_list,
         };
     }
-    
+
+    pub fn clone(&self) -> Self {
+        Matrix {
+            rows: self.rows,
+            cols: self.cols,
+            data: self.data.clone(), // Clone the internal Vec<f64>
+        }
+    }
+
     /// <summary>
     /// Returns the value at Matrix[row][col]. Does not check if indices are in bounds.
     /// </summary>
@@ -88,7 +98,7 @@ impl Matrix {
             }
         }
         return Matrix {
-            rows: self.cols,
+            rows: self.rows,
             cols: self.cols,
             data: new_data,
         }
@@ -181,4 +191,25 @@ impl Matrix {
         }
         return string;
     }
+}
+
+/// <summary>
+/// Randomizes the rows of both matrices in the same way. Does not check if the matrices have the same number of rows.
+/// </summary>
+pub fn randomize_rows_together(matrix1: &mut Matrix, matrix2: &mut Matrix) {
+    let mut shuffled_rows: Vec<usize> = (0..matrix1.rows).collect();
+    shuffled_rows.shuffle(&mut rand::thread_rng());
+    let mut matrix1_new_data: Vec<f64> = Vec::new();
+    let mut matrix2_new_data: Vec<f64> = Vec::new();
+
+    for row in shuffled_rows {
+        for col in 0..matrix1.cols {
+            matrix1_new_data.push(matrix1.at(row, col));
+        }
+        for col in 0..matrix2.cols {
+            matrix2_new_data.push(matrix2.at(row, col));
+        }
+    }
+    matrix1.data = matrix1_new_data;
+    matrix2.data = matrix2_new_data;
 }

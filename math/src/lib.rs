@@ -1,5 +1,4 @@
 pub mod matrix;
-
 #[cfg(test)]
 mod tests {
     use crate::matrix::Matrix;
@@ -173,5 +172,27 @@ mod tests {
         println!("{}", {sum_check});
 
         assert_eq!(sum, sum_check);
+    }
+
+    
+    #[test]
+    fn randomize_rows_together_test() {
+        let mut matrix1 = Matrix::new(4, 1);
+        let mut matrix2 = Matrix::new(4, 1);
+        matrix1.set(0, 0, 1.0);
+        matrix1.set(1, 0, 2.0);
+        matrix1.set(2, 0, 3.0);
+        matrix1.set(3, 0, 4.0);
+
+        matrix2.set(0, 0, 1.0);
+        matrix2.set(1, 0, 2.0);
+        matrix2.set(2, 0, 3.0);
+        matrix2.set(3, 0, 4.0);
+
+        crate::matrix::randomize_rows_together(&mut matrix1, &mut matrix2);
+
+        println!("Matrix 1:\n{}\nMatrix 2:\n{}", matrix1.to_string(), matrix2.to_string());
+
+        assert_eq!(matrix1.to_string(), matrix2.to_string());
     }
 }
