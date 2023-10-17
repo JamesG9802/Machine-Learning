@@ -2,12 +2,13 @@ use std::env;
 use std::fs;
 use std::io;
 
-use dragon_math as math;
-use math::matrix::Matrix;
+use dragon_math;
+use dragon_math::matrix::Matrix;
 
-use dragon_model as model;
-use model::linear_regression;
-use model::linear_regression::LinearRegression;
+use dragon_model;
+use dragon_model::model as model;
+use dragon_model::linear_regression::LinearRegression as LinearRegression;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let mut learning_rate: f64 = 0.01;
@@ -65,16 +66,16 @@ fn main() {
     let test_outputs = outputs.submatrix(((outputs.rows as f64) * 0.8) as usize, 0, outputs.rows, outputs.cols);
 
 
-    let mut model: LinearRegression = LinearRegression::new(3);
-    
+    let linear_regression: LinearRegression = LinearRegression::new(3);
+    let mut model = linear_regression.model;
     model.train(
         training_inputs,
         training_outputs,
         vec![learning_rate, max_iterations, batch_size],
-        model::linear_regression::mini_batch_gradient_descent_l2,
+        model::batch_gradient_descent_l2,
     );
 
-    println!("Loss against test dataset: {}", model.get_loss(&test_inputs, &test_outputs, linear_regression::loss_squared));
+    println!("Loss against test dataset: {}", model.get_loss(&test_inputs, &test_outputs, model::loss_squared));
 
     let mut line: String;
     let mut inputs: Matrix;

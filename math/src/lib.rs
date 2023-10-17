@@ -173,7 +173,6 @@ mod tests {
 
         assert_eq!(sum, sum_check);
     }
-
     
     #[test]
     fn randomize_rows_together_test() {
