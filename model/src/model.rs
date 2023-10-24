@@ -1,6 +1,10 @@
 use dragon_math as math;
 use math::matrix::{self, Matrix};
 
+pub const LEARNING_RATE: usize = 0;
+pub const MAX_ITERATIONS: usize = 1;
+pub const BATCH_SIZE: usize = 2;
+
 /// <summary>
 /// A model that can be trained with weights and biases.
 /// </summary>
@@ -18,24 +22,29 @@ pub struct Model {
     pub bias: f64,
 
     /// <summary>
-    /// Uses the current weights to predict an output value. Throws an error if inputs do not match weight dimensions.
+    /// Uses the current weights to predict an output value.
     /// </summary>
     pub predict_fn: fn(&Model, &Matrix) -> f64,
 
-
+    /// <summary>
+    /// Uses the current inputs to determine how the model's weights should be updated compared to actual outputs.
+    /// </summary>
+    pub update_fn: fn(&mut Model, &Matrix, &Matrix, &Vec<f64>),
 }
 impl Model {
     
     /// <summary>
     /// Creates a  model for a specific input size.
     /// </summary>
-    pub fn new(input_size: usize, predict_fn: fn(&Model, &Matrix) -> f64) -> Model {
+    pub fn new(input_size: usize, predict_fn: fn(&Model, &Matrix) -> f64, 
+        update_fn: fn(&mut Model, &Matrix, &Matrix, &Vec<f64>)) -> Model {
         let weights = Matrix::new(1, input_size);
         return Model {
             input_size: input_size,
             weights: weights,
             bias: 0.0,
-            predict_fn: predict_fn
+            predict_fn: predict_fn,
+            update_fn: update_fn
         };
     }
 
@@ -118,30 +127,15 @@ pub fn batch_gradient_descent_l2(
     hyper_parameters: Vec<f64>,
 ) {
     let mut iteration_count: i64 = 0;
-    while hyper_parameters[1] == -1.0 || iteration_count < hyper_parameters[1] as i64 {
+    while hyper_parameters[MAX_ITERATIONS] == -1.0 
+        || iteration_count < hyper_parameters[MAX_ITERATIONS] as i64 {
         iteration_count += 1;
         println!("Iteration #{iteration_count}");
-        let gradient_weights: Matrix;
-        let gradient_bias: f64;
-        //  prediction: y = w1x1 + w2x2 + ... wnxn + bias
-        //  mean squared error: 1/n(actual-predicted)^2
-        //  gradient (weights): -2/n Σ(actual-predicted)x
-        //  gradient (bias): -2/n Σ(actual-predicted)
-        let prediction: Matrix = model.predict_multiple(training_inputs);
-        let difference: Matrix = training_outputs.add(&prediction.multiply_scalar(-1.0));
-        //  Σ(actual-predicted)x
-        gradient_weights = training_inputs.transpose().dot(&difference);
-        //  Σ(actual-predicted)
-        gradient_bias = difference.sum(0, 0, difference.rows, difference.cols);
-        //  weights = weights - gradient
-        model.weights = model.weights.add(
-            &gradient_weights
-                .multiply_scalar(2.0 * hyper_parameters[0] / training_inputs.rows as f64),
-        );
-        model.bias =
-            model.bias + gradient_bias * 2.0 * hyper_parameters[0] / training_inputs.rows as f64;
-
+        
+        (model.update_fn)(model, &training_inputs, &training_outputs, &hyper_parameters);
+        
         let mut training_error: f64 = 0.0;
+        let prediction: Matrix = model.predict_multiple(&training_inputs);
         for i in 0..training_outputs.rows {
             training_error += loss_squared(training_outputs.at(i, 0), prediction.at(i, 0));
         }
@@ -167,30 +161,14 @@ pub fn stochastic_gradient_descent_l2(
     let mut cloned_outputs: Matrix = training_outputs.clone();
 
     let mut iteration_count: i64 = 0;
-    while hyper_parameters[1] == -1.0 || iteration_count < hyper_parameters[1] as i64 {
+    while hyper_parameters[MAX_ITERATIONS] == -1.0 
+        || iteration_count < hyper_parameters[MAX_ITERATIONS] as i64 {
         iteration_count += 1;
         println!("Iteration #{iteration_count}");
         //  randomize order of inputs and outputs
         matrix::randomize_rows_together(&mut cloned_inputs, &mut cloned_outputs);
-        for row in 0..cloned_inputs.rows {
-            let gradient_weights: Matrix;
-            let gradient_bias: f64;
-            let single_input: Matrix = cloned_inputs.submatrix(row, 0, row + 1, cloned_inputs.cols);
-            let single_output: Matrix = cloned_outputs.submatrix(row, 0, row + 1, cloned_outputs.cols);
-            //  prediction: y = w1x1 + w2x2 + ... wnxn + bias
-            //  mean squared error: 1/n(actual-predicted)^2
-            //  gradient (weights): -2/n Σ(actual-predicted)x
-            //  gradient (bias): -2/n Σ(actual-predicted)
-
-            let prediction: Matrix = model.predict_multiple(&single_input);
-            let difference: Matrix = single_output.add(&prediction.multiply_scalar(-1.0));
-            //  Σ(actual-predicted)x
-            gradient_weights = single_input.transpose().dot(&difference);
-            //  Σ(actual-predicted)
-            gradient_bias = difference.sum(0, 0, difference.rows, difference.cols);
-            //  weights = weights - gradient
-            model.weights = model.weights.add(&gradient_weights.multiply_scalar(2.0 * hyper_parameters[0]));
-            model.bias = model.bias + gradient_bias * 2.0 * hyper_parameters[0];
+        for _row in 0..cloned_inputs.rows {
+            (model.update_fn)(model, &training_inputs, &training_outputs, &hyper_parameters);
         }
 
         let prediction: Matrix = model.predict_multiple(&cloned_inputs);
@@ -221,11 +199,12 @@ pub fn mini_batch_gradient_descent_l2(
     let mut cloned_outputs: Matrix = training_outputs.clone();
 
     let mut iteration_count: i64 = 0;
-    let mut batch_size: f64 = hyper_parameters[2];
+    let mut batch_size: f64 = hyper_parameters[BATCH_SIZE];
     if batch_size <= 0.0 {
         batch_size = 50.0;
     }
-    while hyper_parameters[1] == -1.0 || iteration_count < hyper_parameters[1] as i64 {
+    while hyper_parameters[MAX_ITERATIONS] == -1.0 
+        || iteration_count < hyper_parameters[MAX_ITERATIONS] as i64 {
         iteration_count += 1;
         println!("Iteration #{iteration_count}");
         //  randomize order of inputs and outputs
@@ -233,8 +212,6 @@ pub fn mini_batch_gradient_descent_l2(
         let mut start_row = 0;
         let mut is_looping= true;
         while is_looping {
-            let gradient_weights: Matrix;
-            let gradient_bias: f64;
             let batch_inputs: Matrix;
             let batch_outputs: Matrix;
             if start_row + batch_size as i64 >= cloned_inputs.rows as i64{
@@ -249,20 +226,7 @@ pub fn mini_batch_gradient_descent_l2(
                     (start_row + batch_size as i64) as usize, cloned_outputs.cols);
             }
             start_row += batch_size as i64;
-            //  prediction: y = w1x1 + w2x2 + ... wnxn + bias
-            //  mean squared error: 1/n(actual-predicted)^2
-            //  gradient (weights): -2/n Σ(actual-predicted)x
-            //  gradient (bias): -2/n Σ(actual-predicted)
-
-            let prediction: Matrix = model.predict_multiple(&batch_inputs);
-            let difference: Matrix = batch_outputs.add(&prediction.multiply_scalar(-1.0));
-            //  Σ(actual-predicted)x
-            gradient_weights = batch_inputs.transpose().dot(&difference);
-            //  Σ(actual-predicted)
-            gradient_bias = difference.sum(0, 0, difference.rows, difference.cols);
-            //  weights = weights - gradient
-            model.weights = model.weights.add(&gradient_weights.multiply_scalar(2.0 * hyper_parameters[0] / cloned_inputs.rows as f64));
-            model.bias = model.bias + gradient_bias * 2.0 * hyper_parameters[0] / cloned_inputs.rows as f64 ;
+            (model.update_fn)(model, &batch_inputs, &batch_outputs, &hyper_parameters);
         }
         let prediction: Matrix = model.predict_multiple(&cloned_inputs);
         let mut training_error: f64 = 0.0;
