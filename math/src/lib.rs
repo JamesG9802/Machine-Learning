@@ -1,4 +1,8 @@
+//! This crate is a collection of useful math functions and structures.
+
+/// This module is a collection of matrix related functions and structures.
 pub mod matrix;
+
 #[cfg(test)]
 mod tests {
     use crate::matrix::Matrix;

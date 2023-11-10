@@ -9,28 +9,96 @@ use dragon_model;
 use dragon_model::model as model;
 use dragon_model::linear_regression::LinearRegression as LinearRegression;
 
+/// Returns the index of the first occurence of the substring in the string. 
+/// Returns -1 if it does not exist.
+fn index_of(string: &str, substring: &str) -> i64{
+    for i in string.match_indices(substring).map(|(index, _)| index).collect::<Vec<usize>>(){
+        return i as i64;
+    }
+    return -1;
+}
+/// Returns a new substring from the beginning index to the end_index - 1.
+/// Panics if indices are out of bounds
+fn substring(string: &str, begin_index: usize, end_index: usize) -> String {
+    let mut new_string: String = String::new();
+    if begin_index >= end_index || end_index > string.chars().count() {
+        panic!("Substring: Index out of bounds. begin_index={}, end_index={}", begin_index, end_index);
+    }
+    for i in begin_index..end_index {
+        new_string.push(string.chars().nth(i).unwrap());
+    }
+    return new_string;
+}
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let mut input_file: String = String::new();
     let mut learning_rate: f64 = 0.01;
     let mut max_iterations: f64 = 10.0;
     let mut batch_size: f64 = 50.0;
-    if args.len() <= 1 {
-        return;
-    }
-    if args.len() > 2 {
-        learning_rate = (&args[2]).parse::<f64>().unwrap();
-    }
-    if args.len() > 3 {
-        max_iterations = (&args[3]).parse::<f64>().unwrap();
-    }
-    if args.len() > 4 {
-        batch_size = (&args[4]).parse::<f64>().unwrap();
+    
+    //  Parse Command Line Arguments
+    for i in 0..args.len() {
+        let argument: &String = &args[i];
+        if argument == "-h" || argument == "--help" {
+            println!("{}{}{}{}{}{}", "usage: [-h | --help]\n",
+                "[-f:<input_file> | --file:<input_file>]\n",
+                "[-l:<learning_rate> | --learningrate:<learning_rate>]\n",
+                "[-n:<max_iterations> | --maxiterations:<max_iterations>]\n",
+                "[-b:<batch_size> | --batchsize:<batch_size>]\n",
+                "[-m:<model> | --model:<model>]");
+            return;
+        }
+        else if argument.starts_with("-f:") || argument.starts_with("--file:") {
+            let index: usize = index_of(&argument, ":") as usize + 1;
+            if index >= argument.chars().count() {
+                println!("Expecting [-l:<learning_rate> | --learningrate:<learning_rate>]");
+                return;
+            }
+            input_file = substring(
+                argument, 
+                index_of(&argument, ":") as usize + 1, 
+                argument.chars().count());
+        }
+        else if argument.starts_with("-l:") || argument.starts_with("--learningrate:") {
+            let index: usize = index_of(&argument, ":") as usize + 1;
+            if index >= argument.chars().count() {
+                println!("Expecting [-l:<learning_rate> | --learningrate:<learning_rate>]");
+                return;
+            }
+            learning_rate = substring(
+                argument, 
+                index_of(&argument, ":") as usize + 1, 
+                argument.chars().count())
+            .parse::<f64>().unwrap();   
+        }
+        else if argument.starts_with("-n:") || argument.starts_with("--maxiterations:") {
+            let index: usize = index_of(&argument, ":") as usize + 1;
+            if index >= argument.chars().count() {
+                println!("Expecting [-n:<max_iterations> | --maxiterations:<max_iterations>]");
+                return;
+            }
+            max_iterations = substring(
+                argument, 
+                index_of(&argument, ":") as usize + 1, 
+                argument.chars().count())
+            .parse::<f64>().unwrap();   
+        }
+        else if argument.starts_with("-b:") || argument.starts_with("--batchsize:") {
+            let index: usize = index_of(&argument, ":") as usize + 1;
+            if index >= argument.chars().count() {
+                println!("Expecting [-b:<batch_size> | --batchsize:<batch_size>]");
+                return;
+            }
+            batch_size = substring(
+                argument, 
+                index_of(&argument, ":") as usize + 1, 
+                argument.chars().count())
+            .parse::<f64>().unwrap();   
+        }
     }
 
     //  Test with IRIS dataset.
-    let file: &String = &args[1];
-    println!("{}", file);
-    let mut binding = fs::read_to_string(file).expect("Something went wrong reading the file.");
+    let mut binding = fs::read_to_string(input_file).expect("Something went wrong reading the file.");
     binding = binding.trim().to_string();
     let contents = binding.split("\n");
     let mut first_line: bool = true;
@@ -72,7 +140,7 @@ fn main() {
         training_inputs,
         training_outputs,
         vec![learning_rate, max_iterations, batch_size],
-        model::batch_gradient_descent_l2,
+        model::stochastic_gradient_descent_l2,
     );
 
     println!("Loss against test dataset: {}", model.get_loss(&test_inputs, &test_outputs, model::loss_squared));

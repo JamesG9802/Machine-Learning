@@ -2,9 +2,7 @@ use dragon_math;
 use dragon_math::matrix::Matrix;
 use crate::model as model;
 use model::Model as Model;
-/// <summary>
 /// A model for performing perceptron training. Expects data to be normalized and outputs to be -1 or +1.
-/// </summary>
 pub struct Perceptron {
     pub model: Model,
 }
@@ -14,10 +12,8 @@ impl Perceptron {
         return Perceptron { model: model };
     }
 }
-/// <summary>
 /// Computes the dot product of the weights and inputs + bias to classify as -1 or 1. 
 /// Throws an error if inputs do not match weight dimensions.
-/// </summary>
 fn perceptron_predict(model: &Model, inputs: &Matrix) -> f64 {
     //  dimensionality does not match
     if model.weights.cols != inputs.cols {
@@ -35,9 +31,7 @@ fn perceptron_predict(model: &Model, inputs: &Matrix) -> f64 {
     }
 }
 
-/// <summary>
 /// Uses the current inputs to determine how the model's weights should be updated.
-/// </summary>
 fn perceptron_update(model: &mut Model, 
     training_inputs: &Matrix, training_outputs: &Matrix, 
     hyper_parameters: &Vec<f64>) {

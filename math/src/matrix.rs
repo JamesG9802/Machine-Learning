@@ -1,9 +1,7 @@
 use std::clone::Clone;
 use rand::{self, seq::SliceRandom};
 
-/// <summary>
 /// A data structure to handle matrices.
-/// </summary> 
 #[derive(Clone)]
 pub struct Matrix {
     pub rows: usize,
@@ -17,9 +15,12 @@ pub struct Matrix {
 
 impl Matrix {
 
-    /// <summary>
     /// Creates an MxN Matrix object. Does not check if the matrix is valid.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let matrix: Matrix = Matrix::new(2,4);  //  Create a 2x4 matrix.
+    /// ```
     pub fn new(rows: usize, cols: usize) -> Matrix {
         let mut data_list: Vec<f64> = Vec::new();
         for _i in 0..rows * cols {
@@ -32,6 +33,7 @@ impl Matrix {
         };
     }
 
+    /// Returns a copy of the matrix.
     pub fn clone(&self) -> Self {
         Matrix {
             rows: self.rows,
@@ -40,23 +42,41 @@ impl Matrix {
         }
     }
 
-    /// <summary>
     /// Returns the value at Matrix[row][col]. Does not check if indices are in bounds.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix: Matrix = Matrix::new(2,4);
+    /// matrix.set(0, 0, 1.0);
+    /// assert_eq!(matrix.at(0, 0), 1.0);
+    /// ```
     pub fn at(&self, row: usize, col: usize) -> f64 {
         return self.data[row * self.cols + col];
     }
 
-    /// <summary>
     /// Sets the value at Matrix[row][col]. Does not check if indices are in bounds.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix: Matrix = Matrix::new(2,4);
+    /// matrix.set(0, 0, 1.0);
+    /// assert_eq!(matrix.at(0, 0), 1.0);
+    /// ```
     pub fn set(&mut self, row: usize, col: usize, value: f64) {
         self.data[row * self.cols + col] = value;
     }
     
-    /// <summary>
     /// Returns a new matrix that is a submatrix of this matrix. Does not check if indices are in bounds.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix: Matrix = Matrix::new(2,4);
+    /// matrix.set(0, 0, 1.0);
+    /// let mut submatrix: Matrix = matrix.submatrix(0, 0, 1, 2);   //  Returns a 1x2 matrix
+    /// assert_eq!(submatrix.rows, 1);
+    /// assert_eq!(submatrix.cols, 2);
+    /// assert_eq!(submatrix.at(0, 0), 1.0);
+    /// ```
     pub fn submatrix(&self, start_row: usize, start_col: usize, end_row: usize, end_col: usize) -> Matrix {
         let mut new_data: Vec<f64> = Vec::new();
         for i in start_row..end_row {
@@ -71,9 +91,17 @@ impl Matrix {
         }
     }
 
-    // <summary>
     /// Returns the transpose of the matrix.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix: Matrix = Matrix::new(2,2);
+    /// matrix.set(1, 0, 1.0);
+    /// matrix.set(0, 1, 2.0);
+    /// matrix = matrix.transpose();
+    /// assert_eq!(matrix.at(1, 0), 2.0);
+    /// assert_eq!(matrix.at(0, 1), 1.0);
+    /// ```
     pub fn transpose(&self) -> Matrix {
         let mut new_data: Vec<f64> = Vec::new();
         for j in 0..self.cols {
@@ -88,6 +116,13 @@ impl Matrix {
         }
     }
 
+    /// Returns the rows of the matrix in a random order. Column order is preserved.
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix: Matrix = Matrix::new(2,2);
+    /// matrix = matrix.randomize_rows();
+    /// ```
     pub fn randomize_rows(&self) -> Matrix {
         let mut shuffled_rows: Vec<usize> = (0..self.rows).collect();
         shuffled_rows.shuffle(&mut rand::thread_rng());
@@ -104,9 +139,14 @@ impl Matrix {
         }
     }
 
-    /// <summary>
     /// Creates an matrix equal to the dot product of this and the other matrix. Does not check if it is possible.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut A : Matrix = Matrix::new(2,2);
+    /// let mut B : Matrix = Matrix::new(2,2);
+    /// let mut C : Matrix = A.dot(&B);
+    /// ```
     pub fn dot(&self, other: &Matrix) -> Matrix {
         let mut new_matrix = Matrix::new(self.rows, other.cols);
         for i in 0..new_matrix.rows {
@@ -122,9 +162,14 @@ impl Matrix {
         return new_matrix;
     }
 
-    /// <summary>
     /// Creates an matrix equal to the sum of this and the other matrix. Does not check if it is possible.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut A : Matrix = Matrix::new(2,2);
+    /// let mut B : Matrix = Matrix::new(2,2);
+    /// let mut C : Matrix = A.add(&B);
+    /// ```
     pub fn add(&self, other: &Matrix) -> Matrix {
         let mut new_matrix = Matrix::new(self.rows, self.cols);
         for i in 0..self.rows {
@@ -135,9 +180,13 @@ impl Matrix {
         return new_matrix;
     }
 
-    /// <summary>
     /// Returns a matrix where each value in the matrix is multiplied by a scalar value.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix : Matrix = Matrix::new(2,2);
+    /// matrix = matrix.multiply_scalar(2.0);
+    /// ```
     pub fn multiply_scalar(&self, scalar: f64) -> Matrix {
         let mut new_data = self.data.clone();
         for i in 0..self.rows * self.cols {
@@ -150,9 +199,13 @@ impl Matrix {
         }
     }
 
-    /// <summary>
     /// Returns a matrix where each value in the matrix is multiplied by a scalar value.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix : Matrix = Matrix::new(2,2);
+    /// matrix = matrix.add_scalar(-1.0);
+    /// ```
     pub fn add_scalar(&self, scalar: f64) -> Matrix {
         let mut new_data = self.data.clone();
         for i in 0..self.rows * self.cols {
@@ -165,9 +218,12 @@ impl Matrix {
         }
     }
 
-    /// <summary>
     /// Returns the sum of all indices from [start_row][start_col] to [end_row][end_col]
-    /// </summary>
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix : Matrix = Matrix::new(2,2);
+    /// let sum: f64 = matrix.sum(0, 0, 2, 2);
+    /// ```
     pub fn sum(&self, start_row: usize, start_col: usize, end_row: usize, end_col: usize) -> f64 {
         let mut sum: f64 = 0.0;
         for i in start_row..end_row {
@@ -177,9 +233,13 @@ impl Matrix {
         }
         return sum;
     }
-    /// <summary>
     /// Returns the matrix as a String.
-    /// </summary>
+    /// # Example
+    /// ```rust
+    /// use dragon_math::matrix::Matrix; 
+    /// let mut matrix : Matrix = Matrix::new(2,2);
+    /// println!("{}", matrix.to_string());
+    /// ```
     pub fn to_string(&self) -> String {
         let mut string : String = String::from("");
         for row in 0..self.rows {
@@ -193,9 +253,15 @@ impl Matrix {
     }
 }
 
-/// <summary>
 /// Randomizes the rows of both matrices in the same way. Does not check if the matrices have the same number of rows.
-/// </summary>
+/// # Example
+/// ```rust
+/// use dragon_math::matrix::Matrix; 
+/// use dragon_math::matrix;
+/// let mut A : Matrix = Matrix::new(2,2);
+/// let mut B : Matrix = Matrix::new(2,2);
+/// matrix::randomize_rows_together(&mut A, &mut B);
+/// ```
 pub fn randomize_rows_together(matrix1: &mut Matrix, matrix2: &mut Matrix) {
     let mut shuffled_rows: Vec<usize> = (0..matrix1.rows).collect();
     shuffled_rows.shuffle(&mut rand::thread_rng());

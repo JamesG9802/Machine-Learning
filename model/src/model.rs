@@ -5,37 +5,25 @@ pub const LEARNING_RATE: usize = 0;
 pub const MAX_ITERATIONS: usize = 1;
 pub const BATCH_SIZE: usize = 2;
 
-/// <summary>
 /// A model that can be trained with weights and biases.
-/// </summary>
 pub struct Model {
     pub input_size: usize,
 
-    /// <summary>
     /// A d-dimensional vector to multiply with inputs to predict a value.
-    /// </summary>
     pub weights: Matrix,
 
-    /// <summary>
     /// A scalar that offsets the predicted value.
-    /// </summary>
     pub bias: f64,
 
-    /// <summary>
     /// Uses the current weights to predict an output value.
-    /// </summary>
     pub predict_fn: fn(&Model, &Matrix) -> f64,
 
-    /// <summary>
     /// Uses the current inputs to determine how the model's weights should be updated compared to actual outputs.
-    /// </summary>
     pub update_fn: fn(&mut Model, &Matrix, &Matrix, &Vec<f64>),
 }
 impl Model {
     
-    /// <summary>
     /// Creates a  model for a specific input size.
-    /// </summary>
     pub fn new(input_size: usize, predict_fn: fn(&Model, &Matrix) -> f64, 
         update_fn: fn(&mut Model, &Matrix, &Matrix, &Vec<f64>)) -> Model {
         let weights = Matrix::new(1, input_size);
@@ -48,16 +36,12 @@ impl Model {
         };
     }
 
-    /// <summary>
     /// Uses the current weights to predict an output value. Throws an error if inputs do not match weight dimensions.
-    /// </summary>
     pub fn predict(&self, inputs: &Matrix) -> f64 {
         return (self.predict_fn)(&self as &Model, inputs);
     }
 
-    /// <summary>
     /// Uses the current weights to predict an output matrix. Throws an error if inputs do not match weight dimensions.
-    /// </summary>
     pub fn predict_multiple(&self, inputs: &Matrix) -> Matrix {
         //  dimensionality does not match
         if self.weights.cols != inputs.cols {
@@ -73,9 +57,7 @@ impl Model {
         return outputs;
     }
 
-    /// <summary>
     /// Returns the cost of predicted outputs compared to actual outputs.
-    /// </summary>
     pub fn get_loss(&self, inputs: &Matrix, outputs: 
         &Matrix,loss_function: fn(f64, f64) -> f64) -> f64 {
         let mut cost: f64 = 0.0;
@@ -86,9 +68,7 @@ impl Model {
         return cost;
     }
   
-    /// <summary>
     /// Trains the linear regression model with the given training function.
-    /// </summary>
     pub fn train(
         &mut self,
         training_inputs: Matrix,
@@ -101,25 +81,17 @@ impl Model {
     }
 }
 
-/// <summary>
 /// Loss function for linear regression; returns the squared error.
-/// </summary>
 pub fn loss_squared(predicted_value: f64, actual_value: f64) -> f64 {
     return (actual_value - predicted_value) * (actual_value - predicted_value);
 }
 
-/// <summary>
 /// Loss function for linear regression; returns the absolute error.
-/// </summary>
 pub fn loss_absolute(predicted_value: f64, actual_value: f64) -> f64 {
     return (actual_value - predicted_value).abs();
 }
 
-/// <summary>
 /// Runs the batch gradient descent algorithm for (L2) least square deviation regression.
-/// </summary>
-/// <param name="hyper_parameter">Hyper Paramaters: The first value is the learning rate.
-/// The second value is the maximum number of training iterations. -1 for infinite iterations or until perfect prediction.</param>
 pub fn batch_gradient_descent_l2(
     model: &mut Model,
     training_inputs: &Matrix,
@@ -145,12 +117,7 @@ pub fn batch_gradient_descent_l2(
     }
 }
 
-/// <summary>
 /// Runs the stochastic gradient descent algorithm for (L2) least square deviation regression.
-/// </summary>
-/// <param name="hyper_parameter">Hyper Paramaters: The first value is the learning rate.
-/// The second value is the maximum number of training iterations. -1 for infinite iterations or until perfect prediction.
-/// </param>
 pub fn stochastic_gradient_descent_l2(
     model: &mut Model,
     training_inputs: &Matrix,
@@ -182,13 +149,7 @@ pub fn stochastic_gradient_descent_l2(
     }
 }
 
-/// <summary>
 /// Runs the mini-batch gradient descent algorithm for (L2) least square deviation regression.
-/// </summary>
-/// <param name="hyper_parameter">Hyper Paramaters: The first value is the learning rate.
-/// The second value is the maximum number of training iterations. -1 for infinite iterations or until perfect prediction.
-/// The third value is the desired size of the mini batch.
-/// </param>
 pub fn mini_batch_gradient_descent_l2(
     model: &mut Model,
     training_inputs: &Matrix,

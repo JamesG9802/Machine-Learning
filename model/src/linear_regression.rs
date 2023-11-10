@@ -3,25 +3,19 @@ use dragon_math::matrix::Matrix;
 use crate::model as model;
 use model::Model as Model;
 
-/// <summary>
 /// A model for performing linear regression training.
-/// </summary>
 pub struct LinearRegression {
     pub model: Model 
 }
 
 impl LinearRegression {
-    /// <summary>
     /// Creates a Linear Regression model for a specific input size.
-    /// </summary>
     pub fn new(input_size: usize) -> LinearRegression {
         let model: Model = Model::new(input_size, linear_regression_predict, linear_regression_update);
         return LinearRegression { model: model };
     }
 }
-/// <summary>
-/// Computes the dot product of the weights and inputs + bias. Throws an error if inputs do not match weight dimensions.
-/// </summary>
+/// Calculates the dot product of the weights and the inputs plus the bias.
 fn linear_regression_predict(model: &Model, inputs: &Matrix) -> f64 {
     //  dimensionality does not match
     if model.weights.cols != inputs.cols {
@@ -33,9 +27,7 @@ fn linear_regression_predict(model: &Model, inputs: &Matrix) -> f64 {
     return inputs.dot(&model.weights.transpose()).at(0, 0) + model.bias;
 }
 
-/// <summary>
 /// Uses the current inputs to determine how the model's weights should be updated.
-/// </summary>
 fn linear_regression_update(model: &mut Model, 
     training_inputs: &Matrix, training_outputs: &Matrix, 
     hyper_parameters: &Vec<f64>) {
