@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use dragon_math;
 use dragon_math::matrix::Matrix;
-use crate::model as model;
+use crate::model::{self as model, LEARNING_RATE};
 use model::Model as Model;
 
 /// A model for performing linear regression training.
@@ -30,9 +32,15 @@ fn linear_regression_predict(model: &Model, inputs: &Matrix) -> f64 {
 /// Uses the current inputs to determine how the model's weights should be updated.
 fn linear_regression_update(model: &mut Model, 
     training_inputs: &Matrix, training_outputs: &Matrix, 
-    hyper_parameters: &Vec<f64>) {
+    hyper_parameters: &HashMap<&str, f64>) {
     let gradient_weights: Matrix;
     let gradient_bias: f64;
+    let mut learning_rate: f64 = 0.01;
+
+    if hyper_parameters.contains_key(LEARNING_RATE) {
+        learning_rate = hyper_parameters.get(LEARNING_RATE).unwrap().clone();
+    }
+
     //  prediction: y = w1x1 + w2x2 + ... wnxn + bias
     //  mean squared error: 1/n(actual-predicted)^2
     //  gradient (weights): -2/n Σ(actual-predicted)x
@@ -45,7 +53,7 @@ fn linear_regression_update(model: &mut Model,
     gradient_bias = difference.sum(0, 0, difference.rows, difference.cols);
     //  weights = weights - gradient
     model.weights = model.weights.add(&gradient_weights
-        .multiply_scalar(2.0 * hyper_parameters[model::LEARNING_RATE] / training_inputs.rows as f64),
+        .multiply_scalar(2.0 * learning_rate / training_inputs.rows as f64),
     );
-    model.bias = model.bias + gradient_bias * 2.0 * hyper_parameters[model::LEARNING_RATE] / training_inputs.rows as f64;
+    model.bias = model.bias + gradient_bias * 2.0 * learning_rate / training_inputs.rows as f64;
 }

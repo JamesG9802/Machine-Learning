@@ -1,9 +1,10 @@
 use dragon_math as math;
 use math::matrix::{self, Matrix};
+use std::collections::HashMap;
 
-pub const LEARNING_RATE: usize = 0;
-pub const MAX_ITERATIONS: usize = 1;
-pub const BATCH_SIZE: usize = 2;
+pub const LEARNING_RATE: &str = "LEARNING_RATE";
+pub const MAX_ITERATIONS: &str = "MAX_ITERATIONS";
+pub const BATCH_SIZE: &str = "BATCH_SIZE";
 
 /// A model that can be trained with weights and biases.
 pub struct Model {
@@ -19,13 +20,13 @@ pub struct Model {
     pub predict_fn: fn(&Model, &Matrix) -> f64,
 
     /// Uses the current inputs to determine how the model's weights should be updated compared to actual outputs.
-    pub update_fn: fn(&mut Model, &Matrix, &Matrix, &Vec<f64>),
+    pub update_fn: fn(&mut Model, &Matrix, &Matrix, &HashMap<&str, f64>),
 }
 impl Model {
     
     /// Creates a  model for a specific input size.
     pub fn new(input_size: usize, predict_fn: fn(&Model, &Matrix) -> f64, 
-        update_fn: fn(&mut Model, &Matrix, &Matrix, &Vec<f64>)) -> Model {
+        update_fn: fn(&mut Model, &Matrix, &Matrix, &HashMap<&str, f64>)) -> Model {
         let weights = Matrix::new(1, input_size);
         return Model {
             input_size: input_size,
@@ -73,8 +74,8 @@ impl Model {
         &mut self,
         training_inputs: Matrix,
         training_outputs: Matrix,
-        hyper_parameters: Vec<f64>,
-        training_function: fn(model: &mut Model, &Matrix, &Matrix, Vec<f64>),
+        hyper_parameters: HashMap<&str, f64>,
+        training_function: fn(model: &mut Model, &Matrix, &Matrix, HashMap<&str, f64>),
     ) 
     {
         training_function(self as &mut Model, &training_inputs, &training_outputs, hyper_parameters);
@@ -96,11 +97,16 @@ pub fn batch_gradient_descent_l2(
     model: &mut Model,
     training_inputs: &Matrix,
     training_outputs: &Matrix,
-    hyper_parameters: Vec<f64>,
+    hyper_parameters: HashMap<&str, f64>,
 ) {
     let mut iteration_count: i64 = 0;
-    while hyper_parameters[MAX_ITERATIONS] == -1.0 
-        || iteration_count < hyper_parameters[MAX_ITERATIONS] as i64 {
+    let mut max_iterations: i64 = 20; 
+    
+    if hyper_parameters.contains_key(MAX_ITERATIONS) {
+        max_iterations = hyper_parameters.get(MAX_ITERATIONS).unwrap().clone() as i64;
+    }
+
+    while max_iterations == -1 || iteration_count < max_iterations {
         iteration_count += 1;
         println!("Iteration #{iteration_count}");
         
@@ -122,14 +128,19 @@ pub fn stochastic_gradient_descent_l2(
     model: &mut Model,
     training_inputs: &Matrix,
     training_outputs: &Matrix,
-    hyper_parameters: Vec<f64>,
+    hyper_parameters: HashMap<&str, f64>,
 ) {
     let mut cloned_inputs: Matrix = training_inputs.clone();
     let mut cloned_outputs: Matrix = training_outputs.clone();
 
     let mut iteration_count: i64 = 0;
-    while hyper_parameters[MAX_ITERATIONS] == -1.0 
-        || iteration_count < hyper_parameters[MAX_ITERATIONS] as i64 {
+    let mut max_iterations: i64 = 20; 
+
+    if hyper_parameters.contains_key(MAX_ITERATIONS) {
+        max_iterations = hyper_parameters.get(MAX_ITERATIONS).unwrap().clone() as i64;
+    }
+
+    while max_iterations == -1 || iteration_count < max_iterations {
         iteration_count += 1;
         println!("Iteration #{iteration_count}");
         //  randomize order of inputs and outputs
@@ -154,18 +165,23 @@ pub fn mini_batch_gradient_descent_l2(
     model: &mut Model,
     training_inputs: &Matrix,
     training_outputs: &Matrix,
-    hyper_parameters: Vec<f64>,
+    hyper_parameters: HashMap<&str, f64>,
 ) {
     let mut cloned_inputs: Matrix = training_inputs.clone();
     let mut cloned_outputs: Matrix = training_outputs.clone();
 
     let mut iteration_count: i64 = 0;
-    let mut batch_size: f64 = hyper_parameters[BATCH_SIZE];
-    if batch_size <= 0.0 {
-        batch_size = 50.0;
+    let mut max_iterations: i64 = 20;
+    let mut batch_size: i64 = 50;
+    
+    if hyper_parameters.contains_key(MAX_ITERATIONS) {
+        max_iterations = hyper_parameters.get(MAX_ITERATIONS).unwrap().clone() as i64;
     }
-    while hyper_parameters[MAX_ITERATIONS] == -1.0 
-        || iteration_count < hyper_parameters[MAX_ITERATIONS] as i64 {
+    if hyper_parameters.contains_key(BATCH_SIZE) {
+        batch_size = hyper_parameters.get(BATCH_SIZE).unwrap().clone() as i64;
+    }
+
+    while max_iterations == -1 || iteration_count < max_iterations {
         iteration_count += 1;
         println!("Iteration #{iteration_count}");
         //  randomize order of inputs and outputs

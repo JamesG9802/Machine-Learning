@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use dragon_math;
 use dragon_math::matrix::Matrix;
-use crate::model as model;
+use crate::model::{self as model, LEARNING_RATE};
 use model::Model as Model;
 /// A model for performing perceptron training. Expects data to be normalized and outputs to be -1 or +1.
 pub struct Perceptron {
@@ -34,7 +36,13 @@ fn perceptron_predict(model: &Model, inputs: &Matrix) -> f64 {
 /// Uses the current inputs to determine how the model's weights should be updated.
 fn perceptron_update(model: &mut Model, 
     training_inputs: &Matrix, training_outputs: &Matrix, 
-    hyper_parameters: &Vec<f64>) {
+    hyper_parameters: &HashMap<&str, f64>) {
+
+    let mut learning_rate: f64 = 0.01;
+
+    if hyper_parameters.contains_key(LEARNING_RATE) {
+        learning_rate = hyper_parameters.get(LEARNING_RATE).unwrap().clone();
+    }
     //  prediction: y = w1x1 + w2x2 + ... wnxn + bias > 0 ? 1 : -1
     //  weights <- (y_actual - y_predict) * learning rate * input
     //  bias <- (y_actual - y_predict) * learning_rate
@@ -42,8 +50,8 @@ fn perceptron_update(model: &mut Model,
     let difference: Matrix = training_outputs.add(&prediction.multiply_scalar(-1.0));
     
     model.weights = model.weights.add(&training_inputs.transpose().dot(&difference)
-        .multiply_scalar(hyper_parameters[model::LEARNING_RATE] / training_inputs.rows as f64),
+        .multiply_scalar(learning_rate / training_inputs.rows as f64),
     );
-    model.bias = model.bias + hyper_parameters[model::LEARNING_RATE] * 
+    model.bias = model.bias + learning_rate * 
         difference.sum(0, 0, difference.rows, difference.cols) / training_inputs.rows as f64;
 }

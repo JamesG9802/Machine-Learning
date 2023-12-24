@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::io;
@@ -7,6 +8,7 @@ use dragon_math::matrix::Matrix;
 
 use dragon_model;
 use dragon_model::model as model;
+use dragon_model::model::{BATCH_SIZE, LEARNING_RATE, MAX_ITERATIONS};
 use dragon_model::linear_regression::LinearRegression as LinearRegression;
 
 /// Returns the index of the first occurence of the substring in the string. 
@@ -17,6 +19,7 @@ fn index_of(string: &str, substring: &str) -> i64{
     }
     return -1;
 }
+
 /// Returns a new substring from the beginning index to the end_index - 1.
 /// Panics if indices are out of bounds
 fn substring(string: &str, begin_index: usize, end_index: usize) -> String {
@@ -29,23 +32,26 @@ fn substring(string: &str, begin_index: usize, end_index: usize) -> String {
     }
     return new_string;
 }
-fn main() {
+
+fn main() {   
     let args: Vec<String> = env::args().collect();
     let mut input_file: String = String::new();
     let mut learning_rate: f64 = 0.01;
     let mut max_iterations: f64 = 10.0;
     let mut batch_size: f64 = 50.0;
-    
+    let mut training_function: fn(model: &mut model::Model, &Matrix, &Matrix, HashMap<&str, f64>) = 
+        model::batch_gradient_descent_l2;
     //  Parse Command Line Arguments
     for i in 0..args.len() {
         let argument: &String = &args[i];
         if argument == "-h" || argument == "--help" {
-            println!("{}{}{}{}{}{}", "usage: [-h | --help]\n",
+            println!("{}{}{}{}{}{}{}", "usage: [-h | --help]\n",
                 "[-f:<input_file> | --file:<input_file>]\n",
                 "[-l:<learning_rate> | --learningrate:<learning_rate>]\n",
                 "[-n:<max_iterations> | --maxiterations:<max_iterations>]\n",
                 "[-b:<batch_size> | --batchsize:<batch_size>]\n",
-                "[-m:<model> | --model:<model>]");
+                "[-m:<model> | --model:<model>]\n", 
+                "[-t:<training_function> | --trainfunc:<training_function>]\n");
             return;
         }
         else if argument.starts_with("-f:") || argument.starts_with("--file:") {
@@ -95,6 +101,23 @@ fn main() {
                 argument.chars().count())
             .parse::<f64>().unwrap();   
         }
+        else if argument.starts_with("-t:") || argument.starts_with("--trainfunc:<training_function>") {
+            let index: usize = index_of(&argument, ":") as usize + 1;
+            if index >= argument.chars().count() {
+                println!("[-t:<training_function> | --trainfunc:<training_function>]");
+                return;
+            }
+            let model_name: String = substring(
+                argument, 
+                index_of(&argument, ":") as usize + 1, 
+                argument.chars().count());
+            match model_name.as_str() {
+                "bgradient" | "batch" => training_function = model::batch_gradient_descent_l2,
+                "mbgradient" | "minibatch" => training_function =  model::mini_batch_gradient_descent_l2,
+                "sgradient" | "stochastic" => training_function =  model::stochastic_gradient_descent_l2,
+                _=> training_function = model::batch_gradient_descent_l2,
+            }
+        }
     }
 
     //  Test with IRIS dataset.
@@ -136,11 +159,15 @@ fn main() {
 
     let linear_regression: LinearRegression = LinearRegression::new(3);
     let mut model = linear_regression.model;
+    let mut hyper_paramaters: HashMap<&str, f64> = HashMap::new();
+    hyper_paramaters.insert(LEARNING_RATE, learning_rate);
+    hyper_paramaters.insert(MAX_ITERATIONS, max_iterations);
+    hyper_paramaters.insert(BATCH_SIZE, batch_size);
     model.train(
         training_inputs,
         training_outputs,
-        vec![learning_rate, max_iterations, batch_size],
-        model::stochastic_gradient_descent_l2,
+        hyper_paramaters,
+        training_function,
     );
 
     println!("Loss against test dataset: {}", model.get_loss(&test_inputs, &test_outputs, model::loss_squared));
